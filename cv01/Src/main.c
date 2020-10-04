@@ -24,16 +24,19 @@
 
 int main(void)
 {
-	static const uint8_t pole[32] = {1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0};
+//	static const uint8_t pole[32] = {1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0};
 
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
 	GPIOA->MODER |= GPIO_MODER_MODER5_0;
     /* Loop forever */
 	for(;;){
+		uint32_t pole = 0b10101001110111011100101010000000;
 
-		for (uint8_t i = 0; i < sizeof(pole); i++){
-			if (pole[i]) GPIOA->BSRR = (1<<5); // set
+		for (uint8_t i = 0; i < 32; i++){
+			if (pole & 0x80000000) GPIOA->BSRR = (1<<5); // set
 			else GPIOA->BRR = (1<<5); // reset
+
+			pole <<= 1;
 
 			for (volatile uint32_t i = 0; i < 100000; i++) {}
 		}
