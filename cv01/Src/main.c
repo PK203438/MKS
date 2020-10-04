@@ -24,11 +24,21 @@
 
 int main(void)
 {
+	static const uint8_t pole[32] = {1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0};
+
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
 	GPIOA->MODER |= GPIO_MODER_MODER5_0;
     /* Loop forever */
 	for(;;){
-		GPIOA->ODR ^= (1<<5); // toggle
-		for (volatile uint32_t i = 0; i < 100000; i++) {}
-	};
+
+		for (uint8_t i = 0; i < sizeof(pole); i++){
+			if (pole[i]) GPIOA->BSRR = (1<<5); // set
+			else GPIOA->BRR = (1<<5); // reset
+
+			for (volatile uint32_t i = 0; i < 100000; i++) {}
+		}
+	}
+
+//		GPIOA->ODR ^= (1<<5); // toggle
+//		for (volatile uint32_t i = 0; i < 100000; i++) {}
 }
