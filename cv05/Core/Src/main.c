@@ -114,7 +114,8 @@ static void uart_process_command(char *cmd){
 	else if (strcasecmp(token, "WRITE") == 0) {
 		token = strtok(NULL, " ");
 		uint16_t addr = atoi(token);
-		uint8_t value;
+		token = strtok(NULL, " ");
+		uint8_t value = atoi(token);
 
 		HAL_I2C_Mem_Write(&hi2c1, EEPROM_ADDR, addr, I2C_MEMADD_SIZE_16BIT, &value, 1, 1000);
 		/* Check if the EEPROM is ready for a new operation */
