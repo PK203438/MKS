@@ -33,7 +33,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ACT_DELAY 750
+#define READ_BUTTONS 40
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,6 +48,7 @@ ADC_HandleTypeDef hadc;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+int16_t temp_ds;
 static const int16_t ntc_lookup[] = { 1689, 1669, 1649, 1630, 1611, 1593, 1575,
 		1557, 1540, 1523, 1507, 1491, 1475, 1459, 1444, 1429, 1415, 1401, 1387,
 		1373, 1360, 1347, 1334, 1321, 1309, 1297, 1285, 1274, 1262, 1251, 1240,
@@ -183,7 +185,9 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+
+
+	  /* USER CODE BEGIN 3 */
 /*
 	  OWConvertAll();
 	  HAL_Delay(CONVERT_T_DELAY);
@@ -193,8 +197,63 @@ int main(void)
 
 	  sct_value(temp_18b20 / 10);
 */
-	  sct_value(ntc_lookup[HAL_ADC_GetValue(&hadc)]);
+/*	  sct_value(ntc_lookup[HAL_ADC_GetValue(&hadc)]);
 	  HAL_Delay(500);
+*/
+
+	    static enum {READ_DS18B20, SHOW_DS18B20, SHOW_NTC} state = SHOW_NTC; // READ_DS18B20 default state
+	    static uint32_t delay_butt;
+	    static uint32_t delay_conv;
+	    static uint8_t butt = 0; // do nothing
+
+	    if (state == READ_DS18B20){
+	  	  OWConvertAll();
+	  //	  HAL_Delay(CONVERT_T_DELAY);
+
+	  	  int16_t temp_18b20;
+	  	  OWReadTemperature(&temp_18b20);
+	  	  temp_ds = temp_18b20 / 10;
+
+	  	  delay_conv = HAL_GetTick();
+	    }
+	    else if (state == SHOW_DS18B20){
+	  	  sct_value(temp_ds);
+	     }
+	    else if (state == SHOW_NTC){
+	  	  sct_value(ntc_lookup[HAL_ADC_GetValue(&hadc)]);
+	  //	  HAL_Delay(500);
+	    }
+
+
+
+	    if (HAL_GPIO_ReadPin(S2_GPIO_Port, S2_Pin) == 0){ // S2
+	   		  state = SHOW_NTC;
+	   		  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+	   	 	  butt = 2;
+	   		  delay_butt = HAL_GetTick();
+	   	  }
+
+	    if (HAL_GPIO_ReadPin(S1_GPIO_Port, S1_Pin) == 0){ // S1
+	  		  state = SHOW_DS18B20;
+	  		  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
+	  		  butt = 1;
+	  		  delay_butt = HAL_GetTick();
+	  	  }
+
+	    if (HAL_GetTick() > delay_butt + READ_BUTTONS){
+	  	  if (butt == 1){
+	  		  state = SHOW_DS18B20;
+	  	  }
+	  	  else if (butt == 2){
+	  		  state = SHOW_NTC;
+	  	  }
+	  	  else if (butt == 0){
+	  	  	  }
+	    }
+
+	    if (HAL_GetTick() > delay_conv + ACT_DELAY){
+	  		  state = READ_DS18B20;
+	    }
   }
   /* USER CODE END 3 */
 }
